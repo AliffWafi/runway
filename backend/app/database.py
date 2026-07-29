@@ -1,35 +1,13 @@
 import os
-import re
 from sqlmodel import SQLModel, create_engine, Session, text
 from dotenv import load_dotenv
 
 load_dotenv()
 
-RAW_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./runway.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./runway.db")
 
-def parse_database_url(url: str) -> str:
-    if not url:
-        return "sqlite:///./runway.db"
-    
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
-        
-    # Automatically convert Supabase IPv6 direct host (db.xxx.supabase.co:5432) to IPv4 Pooler
-    if "supabase.co" in url:
-        match = re.search(r"db\.([a-z0-9]+)\.supabase\.co", url)
-        if match:
-            project_ref = match.group(1)
-            url = re.sub(
-                r"db\.[a-z0-9]+\.supabase\.co:5432",
-                "aws-0-ap-southeast-1.pooler.supabase.com:6543",
-                url
-            )
-            if f"postgres.{project_ref}" not in url:
-                url = url.replace("postgresql://postgres:", f"postgresql://postgres.{project_ref}:", 1)
-            
-    return url
-
-DATABASE_URL = parse_database_url(RAW_DATABASE_URL)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 connect_args = {}
 if "sqlite" in DATABASE_URL:
