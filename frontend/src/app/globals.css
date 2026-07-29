@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-mono: 'Courier New', Courier, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Georgia', serif;
+
+  /* Gruvbox Warm Paper Palette */
+  --gruv-paper-bg: #fbf1c7;        /* Warm Cream Paper Background */
+  --gruv-paper-card: #ebdbb2;      /* Ticket Base Card Surface */
+  --gruv-paper-header: #d5c4a1;    /* Ticket Top Header Block */
+  --gruv-paper-border: #3c3836;    /* Solid Dark Border */
+  --gruv-paper-text: #282828;      /* Primary Dark Text */
+  --gruv-paper-muted: #665c54;     /* Muted Label Text */
+
+  /* Gruvbox Status Banner Colors */
+  --status-taxiing-bg: #83a598;    /* Muted Teal Blue */
+  --status-holding-bg: #e5c07b;    /* Warm Gold */
+  --status-cleared-bg: #a9b665;    /* Warm Sage Green */
+  --status-airborne-bg: #8ec07c;   /* Bright Green */
+  --status-gate-bg: #ea696c;       /* Coral Red */
+  --status-pattern-bg: #d3869b;    /* Warm Muted Purple */
+
+  --gruv-orange: #fe8019;
+}
+
+body {
+  background-color: var(--gruv-paper-bg);
+  color: var(--gruv-paper-text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+/* Dashed Page Separator */
+.dashed-separator {
+  border-bottom: 2px dashed #3c3836;
+}
+
+/* Flight Ticket Card - 3 Tier Layout */
+.ticket-card {
+  background-color: var(--gruv-paper-card);
+  border: 1.5px solid var(--gruv-paper-border);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0px rgba(60, 56, 54, 0.15);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 3px 0px rgba(60, 56, 54, 0.3);
+}
+
+.ticket-header {
+  background-color: var(--gruv-paper-header);
+  padding: 10px 12px;
+  border-bottom: 1px dashed var(--gruv-paper-border);
+}
+
+.ticket-body {
+  padding: 10px 12px;
+  flex: 1;
+}
+
+.ticket-footer {
+  border-top: 1.5px solid var(--gruv-paper-border);
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #282828;
+}
+
+/* Modal Overlay & Non-Scrollable Container */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 40, 40, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+}
+
+.modal-container {
+  background: #fbf1c7;
+  border: 2px solid #3c3836;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0px #3c3836;
+  width: 100%;
+  max-width: 620px;
+  overflow: visible; /* Zero scroll, fully visible content */
+}

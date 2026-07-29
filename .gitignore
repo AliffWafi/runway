@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+backend/venv/
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Next.js Build Output
+frontend/.next/
+frontend/out/
+
+# Environment Variables
+.env
+*.env
+backend/.env
+frontend/.env.local
+
+# Databases & Local Data
+*.db
+backend/runway.db
+
+# OS / IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
