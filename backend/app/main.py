@@ -1,9 +1,10 @@
 import uuid
 from typing import List, Optional
 from datetime import datetime
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Header
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session, select, or_
+from sqlmodel import Session, select
 
 from app.database import init_db, get_session
 from app.models import (
@@ -22,10 +23,19 @@ from app.models import (
 )
 from app.auth import get_password_hash, verify_password, create_access_token, decode_access_token
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Startup DB init warning: {e}")
+    yield
+
 app = FastAPI(
     title="Runway API",
     description="FastAPI Backend service for Runway Job Application Tracker",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -35,10 +45,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-def on_startup():
-    init_db()
 
 # --- AUTH HELPER ---
 def get_current_user_optional(
@@ -105,10 +111,8 @@ def read_jobs(
     session: Session = Depends(get_session)
 ):
     if current_user:
-        # Return ONLY jobs created by this authenticated pilot
         jobs = session.exec(select(JobApplication).where(JobApplication.user_id == current_user.id)).all()
     else:
-        # Unauthenticated / guest mode: return empty list for clean log deck
         jobs = []
 
     results = []
@@ -262,7 +266,6 @@ def delete_job(job_id_str: str, session: Session = Depends(get_session)):
         pass
 
     if not job:
-        # If not found in DB by UUID, return 204 cleanly so UI removes local sample items
         return None
 
     logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
