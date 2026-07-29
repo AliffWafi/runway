@@ -39,49 +39,21 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Global CORS Headers Helper
-def apply_cors_headers(response: Response, request: Request):
-    origin = request.headers.get("origin") or "*"
-    response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    return response
+# Standard Starlette CORSMiddleware with credentials support
+allowed_origins = [
+    "https://runway-three-theta.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+]
 
-# Custom Global Exception Handler to ensure CORS headers even on 500 errors
-@app.exception_handler(Exception)
-async def custom_global_exception_handler(request: Request, exc: Exception):
-    print(f"Unhandled Server Exception: {exc}")
-    response = JSONResponse(
-        status_code=500,
-        content={"detail": f"Internal Server Error: {str(exc)}"}
-    )
-    return apply_cors_headers(response, request)
-
-@app.exception_handler(HTTPException)
-async def custom_http_exception_handler(request: Request, exc: HTTPException):
-    response = JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
-    return apply_cors_headers(response, request)
-
-# HTTP Middleware for OPTIONS preflight and CORS
-@app.middleware("http")
-async def add_cors_headers_middleware(request: Request, call_next):
-    if request.method == "OPTIONS":
-        response = Response(status_code=200)
-        return apply_cors_headers(response, request)
-
-    try:
-        response = await call_next(request)
-    except Exception as exc:
-        print(f"Middleware caught exception: {exc}")
-        response = JSONResponse(
-            status_code=500,
-            content={"detail": f"Internal Server Error: {str(exc)}"}
-        )
-    return apply_cors_headers(response, request)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- AUTH HELPER ---
 def get_current_user_optional(
@@ -104,47 +76,35 @@ def get_current_user_optional(
 
 @app.post("/api/v1/auth/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 def register_user(user_in: UserCreate, session: Session = Depends(get_session)):
-    try:
-        init_db() # Ensure tables exist
-        existing_user = session.exec(select(User).where(User.email == user_in.email.lower())).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Pilot account with this email already exists")
+    init_db()
+    existing_user = session.exec(select(User).where(User.email == user_in.email.lower())).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Pilot account with this email already exists")
 
-        hashed_pw = get_password_hash(user_in.password)
-        user = User(
-            email=user_in.email.lower(),
-            full_name=user_in.full_name or user_in.email.split("@")[0].capitalize(),
-            hashed_password=hashed_pw
-        )
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+    hashed_pw = get_password_hash(user_in.password)
+    user = User(
+        email=user_in.email.lower(),
+        full_name=user_in.full_name or user_in.email.split("@")[0].capitalize(),
+        hashed_password=hashed_pw
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
 
-        token = create_access_token(data={"sub": str(user.id), "email": user.email})
-        user_read = UserRead(id=user.id, email=user.email, full_name=user.full_name, created_at=user.created_at)
-        return Token(access_token=token, user=user_read)
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Registration Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Database registration error: {str(e)}")
+    token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    user_read = UserRead(id=user.id, email=user.email, full_name=user.full_name, created_at=user.created_at)
+    return Token(access_token=token, user=user_read)
 
 @app.post("/api/v1/auth/login", response_model=Token)
 def login_user(credentials: UserLogin, session: Session = Depends(get_session)):
-    try:
-        init_db() # Ensure tables exist
-        user = session.exec(select(User).where(User.email == credentials.email.lower())).first()
-        if not user or not verify_password(credentials.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Invalid pilot credentials")
+    init_db()
+    user = session.exec(select(User).where(User.email == credentials.email.lower())).first()
+    if not user or not verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid pilot credentials")
 
-        token = create_access_token(data={"sub": str(user.id), "email": user.email})
-        user_read = UserRead(id=user.id, email=user.email, full_name=user.full_name, created_at=user.created_at)
-        return Token(access_token=token, user=user_read)
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Login Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Database login error: {str(e)}")
+    token = create_access_token(data={"sub": str(user.id), "email": user.email})
+    user_read = UserRead(id=user.id, email=user.email, full_name=user.full_name, created_at=user.created_at)
+    return Token(access_token=token, user=user_read)
 
 @app.get("/")
 def read_root():
