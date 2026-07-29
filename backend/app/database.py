@@ -14,12 +14,18 @@ def parse_database_url(url: str) -> str:
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
         
-    # Map direct Supabase IPv6 host (db.xxx.supabase.co:5432) to IPv4 Pooler
+    # Automatically convert Supabase IPv6 direct host (db.xxx.supabase.co:5432) to IPv4 Pooler
     if "supabase.co" in url:
-        match = re.search(r"postgresql://([^:]+):([^@]+)@db\.([^.]+)\.supabase\.co:5432/(.+)", url)
+        match = re.search(r"db\.([a-z0-9]+)\.supabase\.co", url)
         if match:
-            user, password, project_ref, dbname = match.groups()
-            url = f"postgresql://{user}.{project_ref}:{password}@aws-0-ap-southeast-1.pooler.supabase.com:6543/{dbname}"
+            project_ref = match.group(1)
+            url = re.sub(
+                r"db\.[a-z0-9]+\.supabase\.co:5432",
+                "aws-0-ap-southeast-1.pooler.supabase.com:6543",
+                url
+            )
+            if f"postgres.{project_ref}" not in url:
+                url = url.replace("postgresql://postgres:", f"postgresql://postgres.{project_ref}:", 1)
             
     return url
 
@@ -65,7 +71,7 @@ def get_session():
         with Session(engine) as session:
             yield session
     except Exception as e:
-        print(f"Session error ({e}), providing fallback SQLite session...")
+        print(f"PostgreSQL Session error ({e}), providing fallback SQLite session...")
         fallback_engine = create_engine("sqlite:///./runway.db", echo=False, connect_args={"check_same_thread": False})
         SQLModel.metadata.create_all(fallback_engine)
         with Session(fallback_engine) as session:
