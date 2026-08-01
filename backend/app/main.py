@@ -215,64 +215,70 @@ def update_job(
     session: Session = Depends(get_session)
 ):
     try:
-        job_uuid = uuid.UUID(job_id_str)
-        job = session.get(JobApplication, job_uuid)
-    except Exception:
-        job = None
-
-    if not job:
-        raise HTTPException(status_code=404, detail="Job application not found")
-
-    old_status = job.status
-    update_data = job_in.dict(exclude_unset=True)
-
-    if "tags_list" in update_data and update_data["tags_list"] is not None:
-        update_data["tags"] = ", ".join(update_data["tags_list"])
-        del update_data["tags_list"]
-
-    for key, value in update_data.items():
-        setattr(job, key, value)
-
-    job.updated_at = datetime.utcnow()
-    session.add(job)
-    session.commit()
-    session.refresh(job)
-
-    if "status" in update_data and update_data["status"] != old_status:
         try:
-            status_str = getattr(job.status, 'value', str(job.status))
-            log = ActivityLog(
-                job_id=job.id,
-                status=job.status,
-                date=datetime.utcnow().strftime("%Y-%m-%d"),
-                note=f"Status changed to {status_str}"
-            )
-            session.add(log)
-            session.commit()
-        except Exception as e:
-            print(f"Log update warning: {e}")
+            job_uuid = uuid.UUID(job_id_str)
+            job = session.get(JobApplication, job_uuid)
+        except Exception:
+            job = None
 
-    tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
-    logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
-    history = [ActivityLogBase(status=l.status, date=l.date, note=l.note) for l in logs]
+        if not job:
+            raise HTTPException(status_code=404, detail="Job application not found")
 
-    return JobApplicationRead(
-        id=job.id,
-        user_id=job.user_id,
-        company=job.company,
-        title=job.title,
-        location=job.location,
-        salary=job.salary,
-        url=job.url,
-        applied_date=job.applied_date,
-        status=job.status,
-        notes=job.notes,
-        tags=job.tags,
-        tags_list=tags_list,
-        history=history,
-        created_at=job.created_at,
-        updated_at=job.updated_at
-    )
+        old_status = job.status
+        update_data = job_in.dict(exclude_unset=True)
+
+        if "tags_list" in update_data and update_data["tags_list"] is not None:
+            update_data["tags"] = ", ".join(update_data["tags_list"])
+            del update_data["tags_list"]
+
+        for key, value in update_data.items():
+            setattr(job, key, value)
+
+        job.updated_at = datetime.utcnow()
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        if "status" in update_data and update_data["status"] != old_status:
+            try:
+                status_str = getattr(job.status, 'value', str(job.status))
+                log = ActivityLog(
+                    job_id=job.id,
+                    status=job.status,
+                    date=datetime.utcnow().strftime("%Y-%m-%d"),
+                    note=f"Status changed to {status_str}"
+                )
+                session.add(log)
+                session.commit()
+            except Exception as e:
+                print(f"Log update warning: {e}")
+
+        tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
+        logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
+        history = [ActivityLogBase(status=l.status, date=l.date, note=l.note) for l in logs]
+
+        return JobApplicationRead(
+            id=job.id,
+            user_id=job.user_id,
+            company=job.company,
+            title=job.title,
+            location=job.location,
+            salary=job.salary,
+            url=job.url,
+            applied_date=job.applied_date,
+            status=job.status,
+            notes=job.notes,
+            tags=job.tags,
+            tags_list=tags_list,
+            history=history,
+            created_at=job.created_at,
+            updated_at=job.updated_at
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"PATCH /jobs exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Update failed: {str(e)}")
 
 @app.delete("/api/v1/jobs/{job_id_str}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_job(job_id_str: str, session: Session = Depends(get_session)):
