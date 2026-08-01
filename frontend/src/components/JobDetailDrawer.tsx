@@ -121,15 +121,18 @@ export function JobDetailDrawer({
               <button
                 type="button"
                 onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                className="border border-[#3c3836] px-2.5 py-0.5 font-extrabold text-[10px] uppercase shadow-[1px_1px_0px_#3c3836] flex items-center gap-1.5 transition-all"
+                className="border border-[#3c3836] px-2.5 py-1 font-mono text-[10px] uppercase shadow-[1px_1px_0px_#3c3836] flex items-center justify-between gap-2 transition-all min-w-[150px]"
                 style={{ backgroundColor: currentBanner.bg, color: currentBanner.text }}
               >
-                {currentStatusConfig.label}
-                <ChevronDown className="w-3 h-3" />
+                <div className="flex flex-col text-left leading-tight overflow-hidden">
+                  <span className="font-extrabold truncate">{currentStatusConfig.label}</span>
+                  <span className="font-normal opacity-85 text-[8.5px] truncate">{currentStatusConfig.sublabel}</span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-1" />
               </button>
 
               {isStatusDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1 z-50 border-2 border-[#3c3836] shadow-[3px_3px_0px_#3c3836] bg-[#282828] min-w-[170px]">
+                <div className="absolute left-0 top-full mt-1 z-50 border-2 border-[#3c3836] shadow-[3px_3px_0px_#3c3836] bg-[#282828] min-w-[180px]">
                   {statusKeys.map((key) => {
                     const optBanner = bannerColors[key];
                     const optConfig = STATUS_CONFIG[key];
@@ -141,10 +144,15 @@ export function JobDetailDrawer({
                           onUpdateStatus(job.id, key);
                           setIsStatusDropdownOpen(false);
                         }}
-                        className="py-1.5 px-2.5 text-[10px] font-mono font-bold uppercase text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer hover:brightness-110"
+                        className="py-1.5 px-2.5 text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer hover:brightness-110"
                         style={{ backgroundColor: optBanner.bg, color: optBanner.text }}
                       >
-                        {optConfig.label}
+                        <div className="text-[10px] font-mono font-extrabold uppercase leading-tight">
+                          {optConfig.label}
+                        </div>
+                        <div className="text-[8.5px] font-mono font-normal opacity-85 uppercase leading-tight mt-0.5">
+                          {optConfig.sublabel}
+                        </div>
                       </div>
                     );
                   })}

@@ -76,7 +76,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
                 <div
                   key={job.id}
                   onClick={() => onOpenDetail(job)}
-                  className={`ticket-card min-h-[220px] cursor-pointer group flex flex-col justify-between relative ${
+                  className={`ticket-card min-h-[235px] cursor-pointer group flex flex-col justify-between relative ${
                     isDropdownOpen ? 'z-40' : 'z-10'
                   }`}
                   style={{ overflow: 'visible' }}
@@ -92,7 +92,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
                   </div>
 
                   {/* 2. Middle Section: Location & Date */}
-                  <div className="ticket-body bg-[#ebdbb2] px-3 py-2.5 flex-1 flex flex-col justify-between min-h-[96px]">
+                  <div className="ticket-body bg-[#ebdbb2] px-3 py-2.5 flex-1 flex flex-col justify-between min-h-[85px]">
                     <div className="text-[10px] font-mono font-bold text-[#3c3836] uppercase line-clamp-2 leading-tight">
                       {job.location || 'KL'}
                     </div>
@@ -101,19 +101,24 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
                     </div>
                   </div>
 
-                  {/* 3. Bottom Section: Status Banner */}
+                  {/* 3. Bottom Section: Status Banner (Two Lines: Main Term + (Bracket Sublabel)) */}
                   <div className="relative status-dropdown-container">
                     <div 
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenDropdownId(isDropdownOpen ? null : job.id);
                       }}
-                      className="ticket-footer py-2.5 px-3 border-t-1.5 border-[#3c3836] flex items-center justify-between cursor-pointer hover:brightness-95 transition-all rounded-b-[3px]"
+                      className="ticket-footer py-2 px-2.5 border-t-1.5 border-[#3c3836] flex items-center justify-between cursor-pointer hover:brightness-95 transition-all rounded-b-[3px]"
                       style={{ backgroundColor: banner.bg, color: banner.text }}
                     >
-                      <span className="text-[9px] font-mono font-extrabold uppercase tracking-tight leading-none truncate">
-                        {statusConfig.label}
-                      </span>
+                      <div className="flex flex-col leading-tight overflow-hidden text-left">
+                        <span className="text-[10px] font-mono font-extrabold uppercase tracking-tight truncate">
+                          {statusConfig.label}
+                        </span>
+                        <span className="text-[8.5px] font-mono font-normal opacity-85 uppercase tracking-tight truncate">
+                          {statusConfig.sublabel}
+                        </span>
+                      </div>
                       
                       <ChevronDown className={`w-3.5 h-3.5 opacity-80 shrink-0 ml-1 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -138,12 +143,17 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
                                 onUpdateStatus(job.id, key);
                                 setOpenDropdownId(null);
                               }}
-                              className={`py-2 px-2.5 text-[9px] font-mono font-extrabold uppercase tracking-tight text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer transition-all hover:brightness-110 active:brightness-90 ${
-                                isCurrent ? 'ring-2 ring-inset ring-[#282828] font-black' : ''
+                              className={`py-2 px-2 text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer transition-all hover:brightness-110 active:brightness-90 ${
+                                isCurrent ? 'ring-2 ring-inset ring-[#282828]' : ''
                               }`}
                               style={{ backgroundColor: optBanner.bg, color: optBanner.text }}
                             >
-                              {optConfig.label}
+                              <div className="text-[10px] font-mono font-extrabold uppercase tracking-tight leading-tight">
+                                {optConfig.label}
+                              </div>
+                              <div className="text-[8.5px] font-mono font-normal opacity-85 uppercase tracking-tight leading-tight mt-0.5">
+                                {optConfig.sublabel}
+                              </div>
                             </div>
                           );
                         })}
@@ -159,7 +169,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
             {/* Add New Ticket Card Button */}
             <div
               onClick={() => onOpenAddModal()}
-              className="border-2 border-dashed border-[#3c3836] rounded-md min-h-[220px] p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-[#d5c4a1]/50 transition-all text-[#504945]"
+              className="border-2 border-dashed border-[#3c3836] rounded-md min-h-[235px] p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-[#d5c4a1]/50 transition-all text-[#504945]"
             >
               <Plus className="w-6 h-6 mb-1" />
               <span className="text-xs font-mono font-bold uppercase">
