@@ -236,11 +236,12 @@ def update_job(
     session.refresh(job)
 
     if "status" in update_data and update_data["status"] != old_status:
+        status_str = getattr(job.status, 'value', str(job.status))
         log = ActivityLog(
             job_id=job.id,
             status=job.status,
             date=datetime.utcnow().strftime("%Y-%m-%d"),
-            note=f"Status changed to {job.status.value}"
+            note=f"Status changed to {status_str}"
         )
         session.add(log)
         session.commit()
