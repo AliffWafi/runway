@@ -33,6 +33,16 @@ def init_db():
     global engine, DATABASE_URL
     try:
         SQLModel.metadata.create_all(engine)
+    except Exception as e:
+        print(f"init_db failed with primary engine ({e}), falling back to SQLite...")
+        try:
+            DATABASE_URL = "sqlite:///./runway.db"
+            engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
+            SQLModel.metadata.create_all(engine)
+        except Exception as err:
+            print(f"Fallback init_db warning: {err}")
+
+    try:
         with Session(engine) as session:
             if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
                 session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
@@ -40,7 +50,7 @@ def init_db():
                 session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
                 session.commit()
     except Exception as e:
-        print(f"init_db warning: {e}")
+        print(f"Migration warning: {e}")
 
 def get_session():
     with Session(engine) as session:
