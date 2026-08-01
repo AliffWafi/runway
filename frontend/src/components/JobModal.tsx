@@ -31,6 +31,7 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
   const bannerColors: Record<ApplicationStatus, { bg: string; text: string }> = {
     taxiing: { bg: '#d5c4a1', text: '#282828' },
     holding: { bg: '#7c6f64', text: '#fbf1c7' },
+    radar_contact: { bg: '#fe8019', text: '#282828' },
     cleared_for_takeoff: { bg: '#98971a', text: '#282828' },
     airborne: { bg: '#458588', text: '#fbf1c7' },
     holding_pattern: { bg: '#fabd2f', text: '#282828' },
