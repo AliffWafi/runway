@@ -43,19 +43,18 @@ def init_db():
             print(f"Fallback init_db warning: {err}")
 
     try:
-        with Session(engine) as session:
-            if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
-                session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
-                session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-                session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+        if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
+            with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
+                conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+                conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
                 
-                # Update PostgreSQL Native Enum type applicationstatus to include radar_contact
+                # Convert status columns from PostgreSQL Enum to VARCHAR for 100% dynamic status support
                 try:
-                    session.exec(text("ALTER TYPE applicationstatus ADD VALUE IF NOT EXISTS 'radar_contact';"))
-                    session.exec(text("ALTER TYPE applicationstatus ADD VALUE IF NOT EXISTS 'RADAR_CONTACT';"))
-                    session.commit()
+                    conn.execute(text("ALTER TABLE job_applications ALTER COLUMN status TYPE VARCHAR USING status::VARCHAR;"))
+                    conn.execute(text("ALTER TABLE activity_logs ALTER COLUMN status TYPE VARCHAR USING status::VARCHAR;"))
                 except Exception as enum_e:
-                    print(f"Enum alter warning: {enum_e}")
+                    print(f"Enum convert warning: {enum_e}")
     except Exception as e:
         print(f"Migration warning: {e}")
 
