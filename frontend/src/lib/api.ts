@@ -131,6 +131,10 @@ export const apiService = {
       }));
     } catch (error) {
       console.warn('Backend API unreachable, falling back to local storage:', error);
+      const token = this.getToken();
+      if (token) {
+        return storageService.getJobs().filter(j => !j.id.startsWith('demo-'));
+      }
       return storageService.getJobs();
     }
   },
