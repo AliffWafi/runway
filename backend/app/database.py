@@ -48,6 +48,9 @@ def init_db():
                 session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
                 session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
                 session.exec(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+                # Drop legacy PostgreSQL Enum CHECK constraints to allow new statuses (e.g. radar_contact)
+                session.exec(text("ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_status_check;"))
+                session.exec(text("ALTER TABLE activity_logs DROP CONSTRAINT IF EXISTS activity_logs_status_check;"))
                 session.commit()
     except Exception as e:
         print(f"Migration warning: {e}")

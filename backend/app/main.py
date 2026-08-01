@@ -177,14 +177,17 @@ def create_job(
     session.commit()
     session.refresh(job)
 
-    log = ActivityLog(
-        job_id=job.id,
-        status=job.status,
-        date=job.applied_date,
-        note="Application entry submitted"
-    )
-    session.add(log)
-    session.commit()
+    try:
+        log = ActivityLog(
+            job_id=job.id,
+            status=job.status,
+            date=job.applied_date,
+            note="Application entry submitted"
+        )
+        session.add(log)
+        session.commit()
+    except Exception as e:
+        print(f"Log creation warning: {e}")
 
     tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
     return JobApplicationRead(
@@ -200,7 +203,7 @@ def create_job(
         notes=job.notes,
         tags=job.tags,
         tags_list=tags_list,
-        history=[ActivityLogBase(status=log.status, date=log.date, note=log.note)],
+        history=[ActivityLogBase(status=log.status, date=log.date, note=log.note)] if 'log' in locals() else [],
         created_at=job.created_at,
         updated_at=job.updated_at
     )
@@ -236,15 +239,18 @@ def update_job(
     session.refresh(job)
 
     if "status" in update_data and update_data["status"] != old_status:
-        status_str = getattr(job.status, 'value', str(job.status))
-        log = ActivityLog(
-            job_id=job.id,
-            status=job.status,
-            date=datetime.utcnow().strftime("%Y-%m-%d"),
-            note=f"Status changed to {status_str}"
-        )
-        session.add(log)
-        session.commit()
+        try:
+            status_str = getattr(job.status, 'value', str(job.status))
+            log = ActivityLog(
+                job_id=job.id,
+                status=job.status,
+                date=datetime.utcnow().strftime("%Y-%m-%d"),
+                note=f"Status changed to {status_str}"
+            )
+            session.add(log)
+            session.commit()
+        except Exception as e:
+            print(f"Log update warning: {e}")
 
     tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
     logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
@@ -280,9 +286,12 @@ def delete_job(job_id_str: str, session: Session = Depends(get_session)):
     if not job:
         return None
 
-    logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
-    for l in logs:
-        session.delete(l)
+    try:
+        logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
+        for l in logs:
+            session.delete(l)
+    except Exception as e:
+        print(f"Delete logs warning: {e}")
 
     session.delete(job)
     session.commit()
