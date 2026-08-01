@@ -45,16 +45,23 @@ def init_db():
     try:
         if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
             with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-                conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
-                conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-                conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
-                
+                try:
+                    conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
+                    conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+                    conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;"))
+                except Exception as col_e:
+                    print(f"Column alter warning: {col_e}")
+
                 # Convert status columns from PostgreSQL Enum to VARCHAR for 100% dynamic status support
                 try:
                     conn.execute(text("ALTER TABLE job_applications ALTER COLUMN status TYPE VARCHAR USING status::VARCHAR;"))
+                except Exception as enum_e1:
+                    print(f"job_applications status convert warning: {enum_e1}")
+                
+                try:
                     conn.execute(text("ALTER TABLE activity_logs ALTER COLUMN status TYPE VARCHAR USING status::VARCHAR;"))
-                except Exception as enum_e:
-                    print(f"Enum convert warning: {enum_e}")
+                except Exception as enum_e2:
+                    print(f"activity_logs status convert warning: {enum_e2}")
     except Exception as e:
         print(f"Migration warning: {e}")
 

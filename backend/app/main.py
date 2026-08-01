@@ -129,8 +129,11 @@ def read_jobs(
     results = []
     for job in jobs:
         tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
-        logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
-        history = [ActivityLogBase(status=l.status, date=l.date, note=l.note) for l in logs]
+        try:
+            logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
+            history = [ActivityLogBase(status=str(l.status), date=l.date, note=l.note) for l in logs]
+        except Exception:
+            history = []
         
         results.append(
             JobApplicationRead(
@@ -142,7 +145,7 @@ def read_jobs(
                 salary=job.salary,
                 url=job.url,
                 applied_date=job.applied_date,
-                status=job.status,
+                status=str(job.status),
                 notes=job.notes,
                 tags=job.tags,
                 tags_list=tags_list,
@@ -159,54 +162,60 @@ def create_job(
     current_user: Optional[User] = Depends(get_current_user_optional),
     session: Session = Depends(get_session)
 ):
-    tags_str = ", ".join(job_in.tags_list) if job_in.tags_list else job_in.tags
-
-    job = JobApplication(
-        user_id=current_user.id if current_user else None,
-        company=job_in.company,
-        title=job_in.title,
-        location=job_in.location,
-        salary=job_in.salary,
-        url=job_in.url,
-        applied_date=job_in.applied_date,
-        status=job_in.status,
-        notes=job_in.notes,
-        tags=tags_str
-    )
-    session.add(job)
-    session.commit()
-    session.refresh(job)
-
     try:
-        log = ActivityLog(
-            job_id=job.id,
-            status=job.status,
-            date=job.applied_date,
-            note="Application entry submitted"
-        )
-        session.add(log)
-        session.commit()
-    except Exception as e:
-        print(f"Log creation warning: {e}")
+        tags_str = ", ".join(job_in.tags_list) if job_in.tags_list else job_in.tags
 
-    tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
-    return JobApplicationRead(
-        id=job.id,
-        user_id=job.user_id,
-        company=job.company,
-        title=job.title,
-        location=job.location,
-        salary=job.salary,
-        url=job.url,
-        applied_date=job.applied_date,
-        status=job.status,
-        notes=job.notes,
-        tags=job.tags,
-        tags_list=tags_list,
-        history=[ActivityLogBase(status=log.status, date=log.date, note=log.note)] if 'log' in locals() else [],
-        created_at=job.created_at,
-        updated_at=job.updated_at
-    )
+        job = JobApplication(
+            user_id=current_user.id if current_user else None,
+            company=job_in.company,
+            title=job_in.title,
+            location=job_in.location,
+            salary=job_in.salary,
+            url=job_in.url,
+            applied_date=job_in.applied_date,
+            status=str(job_in.status),
+            notes=job_in.notes,
+            tags=tags_str
+        )
+        session.add(job)
+        session.commit()
+        session.refresh(job)
+
+        try:
+            log = ActivityLog(
+                job_id=job.id,
+                status=str(job.status),
+                date=job.applied_date,
+                note="Application entry submitted"
+            )
+            session.add(log)
+            session.commit()
+        except Exception as e:
+            print(f"Log creation warning: {e}")
+
+        tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
+        return JobApplicationRead(
+            id=job.id,
+            user_id=job.user_id,
+            company=job.company,
+            title=job.title,
+            location=job.location,
+            salary=job.salary,
+            url=job.url,
+            applied_date=job.applied_date,
+            status=str(job.status),
+            notes=job.notes,
+            tags=job.tags,
+            tags_list=tags_list,
+            history=[ActivityLogBase(status=str(log.status), date=log.date, note=log.note)] if 'log' in locals() else [],
+            created_at=job.created_at,
+            updated_at=job.updated_at
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"POST /jobs exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Create job failed: {str(e)}")
 
 @app.patch("/api/v1/jobs/{job_id_str}", response_model=JobApplicationRead)
 def update_job(
@@ -244,7 +253,7 @@ def update_job(
                 status_str = getattr(job.status, 'value', str(job.status))
                 log = ActivityLog(
                     job_id=job.id,
-                    status=job.status,
+                    status=str(job.status),
                     date=datetime.utcnow().strftime("%Y-%m-%d"),
                     note=f"Status changed to {status_str}"
                 )
@@ -254,8 +263,11 @@ def update_job(
                 print(f"Log update warning: {e}")
 
         tags_list = [t.strip() for t in job.tags.split(",")] if job.tags else []
-        logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
-        history = [ActivityLogBase(status=l.status, date=l.date, note=l.note) for l in logs]
+        try:
+            logs = session.exec(select(ActivityLog).where(ActivityLog.job_id == job.id)).all()
+            history = [ActivityLogBase(status=str(l.status), date=l.date, note=l.note) for l in logs]
+        except Exception:
+            history = []
 
         return JobApplicationRead(
             id=job.id,
@@ -266,7 +278,7 @@ def update_job(
             salary=job.salary,
             url=job.url,
             applied_date=job.applied_date,
-            status=job.status,
+            status=str(job.status),
             notes=job.notes,
             tags=job.tags,
             tags_list=tags_list,
