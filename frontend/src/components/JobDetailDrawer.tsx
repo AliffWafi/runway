@@ -1,15 +1,13 @@
-'use client';
-
-import React, { useState } from 'react';
-import { JobApplication, STATUS_CONFIG, ApplicationStatus } from '../types/job';
-import { ChevronDown, ExternalLink } from 'lucide-react';
+import React from 'react';
+import { JobApplication, ApplicationStatus, STATUS_CONFIG } from '../types/job';
 
 interface JobDetailDrawerProps {
   job: JobApplication | null;
   onClose: () => void;
   onEdit: (job: JobApplication) => void;
   onDelete: (id: string) => void;
-  onUpdateStatus: (id: string, newStatus: ApplicationStatus) => void;
+  onUpdateStatus?: (id: string, newStatus: ApplicationStatus) => void;
+  onStatusChange?: (id: string, newStatus: ApplicationStatus) => void;
 }
 
 export function JobDetailDrawer({
@@ -17,11 +15,18 @@ export function JobDetailDrawer({
   onClose,
   onEdit,
   onDelete,
-  onUpdateStatus
+  onUpdateStatus,
+  onStatusChange
 }: JobDetailDrawerProps) {
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-
   if (!job) return null;
+
+  const handleStatusUpdate = (id: string, newStatus: ApplicationStatus) => {
+    if (onUpdateStatus) {
+      onUpdateStatus(id, newStatus);
+    } else if (onStatusChange) {
+      onStatusChange(id, newStatus);
+    }
+  };
 
   const statusKeys = Object.keys(STATUS_CONFIG) as ApplicationStatus[];
 
@@ -30,186 +35,188 @@ export function JobDetailDrawer({
     holding: { bg: '#7c6f64', text: '#fbf1c7' },
     radar_contact: { bg: '#fe8019', text: '#282828' },
     cleared_for_takeoff: { bg: '#98971a', text: '#282828' },
-    airborne: { bg: '#458588', text: '#fbf1c7' },
-    holding_pattern: { bg: '#fabd2f', text: '#282828' },
-    return_to_gate: { bg: '#ea696c', text: '#282828' }
+    airborne: { bg: '#b8bb26', text: '#282828' },
+    holding_pattern: { bg: '#d3869b', text: '#282828' },
+    return_to_gate: { bg: '#fb4934', text: '#fbf1c7' }
   };
 
-  const currentStatusConfig = STATUS_CONFIG[job.status] || STATUS_CONFIG.taxiing;
   const currentBanner = bannerColors[job.status] || { bg: '#d5c4a1', text: '#282828' };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      {/* Gruvbox Paper Document Dossier Sheet Container */}
-      <div 
-        className="modal-container bg-[#fbf1c7] border-2 border-[#3c3836] rounded-sm max-w-2xl p-5 shadow-[6px_6px_0px_#3c3836] relative font-mono text-xs text-[#282828]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Corner Bracket Marks Framing */}
-        <div className="absolute top-2 left-2 w-3.5 h-3.5 border-t-2 border-l-2 border-[#3c3836]" />
-        <div className="absolute top-2 right-2 w-3.5 h-3.5 border-t-2 border-r-2 border-[#3c3836]" />
-        <div className="absolute bottom-2 left-2 w-3.5 h-3.5 border-b-2 border-l-2 border-[#3c3836]" />
-        <div className="absolute bottom-2 right-2 w-3.5 h-3.5 border-b-2 border-r-2 border-[#3c3836]" />
-
-        {/* 1. Header Bar with Action Controls */}
-        <div className="flex justify-between items-center mb-4 pb-2 border-b-2 border-dashed border-[#3c3836]">
-          <h2 className="text-lg font-bold font-mono text-[#282828] underline underline-offset-4 uppercase">
-            MANIFEST DOSSIER: {job.company}
-          </h2>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onEdit(job)}
-              className="bg-[#458588] text-[#fbf1c7] font-bold text-[10px] px-2.5 py-1 border border-[#3c3836] shadow-[1px_1px_0px_#3c3836] hover:bg-[#83a598] transition-all uppercase"
-            >
-              [ EDIT ]
-            </button>
-            <button
-              onClick={() => onDelete(job.id)}
-              className="bg-[#ea696c] text-[#282828] font-bold text-[10px] px-2.5 py-1 border border-[#3c3836] shadow-[1px_1px_0px_#3c3836] hover:bg-[#fb4934] transition-all uppercase"
-            >
-              [ DELETE ]
-            </button>
-            <button
-              onClick={onClose}
-              className="bg-[#3c3836] text-[#ebdbb2] font-bold text-[10px] px-2 py-1 rounded-sm hover:bg-[#504945] transition-all"
-            >
-              [X]
-            </button>
-          </div>
-        </div>
-
-        {/* 2. Position Title & Job Link */}
-        <div className="mb-4">
-          <div className="text-base font-bold font-mono text-[#282828] uppercase">
-            {job.title}
-          </div>
-          {job.url && (
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 mt-1 text-[11px] font-mono text-[#b16286] font-bold underline hover:text-[#d3869b]"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              OPEN ORIGINAL JOB POSTING
-            </a>
-          )}
-        </div>
-
-        {/* 3. Metadata Grid: Location, Salary, Date, Status */}
-        <div className="bg-[#ebdbb2] border border-[#3c3836] p-3 rounded-sm mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3 shadow-[2px_2px_0px_#3c3836]">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#665c54] min-w-[75px]">LOCATION:</span>
-            <span className="font-bold text-[#282828] uppercase">{job.location || 'KL'}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#665c54] min-w-[75px]">SALARY:</span>
-            <span className="font-bold text-[#282828]">{job.salary || 'NOT DISCLOSED'}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#665c54] min-w-[75px]">DATE APPLIED:</span>
-            <span className="font-bold text-[#282828]">{job.appliedDate || '2026-07-27'}</span>
-          </div>
-
-          {/* Custom Status Dropdown Menu inside Dossier */}
-          <div className="flex items-center gap-2 relative">
-            <span className="font-bold text-[#665c54] min-w-[75px]">STATUS:</span>
-            <div className="relative">
+    <div className="fixed inset-0 z-50 flex justify-end bg-[#282828]/60 backdrop-blur-xs">
+      <div className="w-full max-w-md bg-[#fbf1c7] h-full shadow-2xl border-l-2 border-[#3c3836] p-6 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200">
+        
+        {/* Header */}
+        <div>
+          <div className="flex items-center justify-between border-b-2 border-[#3c3836] pb-3 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold font-mono px-2 py-0.5 bg-[#ebdbb2] border border-[#3c3836] text-[#3c3836]">
+                FLIGHT DOSSIER
+              </span>
+              <span className="text-xs font-mono text-[#665c54]">
+                ID: #{job.id.substring(0, 6)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               <button
-                type="button"
-                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                className="border border-[#3c3836] px-2.5 py-1 font-mono text-[10px] uppercase shadow-[1px_1px_0px_#3c3836] flex items-center justify-between gap-2 transition-all min-w-[150px]"
-                style={{ backgroundColor: currentBanner.bg, color: currentBanner.text }}
+                onClick={() => onEdit(job)}
+                className="text-xs font-bold font-mono text-[#458588] hover:underline"
               >
-                <div className="flex flex-col text-left leading-tight overflow-hidden">
-                  <span className="font-extrabold truncate">{currentStatusConfig.label}</span>
-                  <span className="font-normal opacity-85 text-[8.5px] truncate">{currentStatusConfig.sublabel}</span>
-                </div>
-                <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-1" />
+                EDIT
               </button>
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to scrub this flight entry?')) {
+                    onDelete(job.id);
+                    onClose();
+                  }
+                }}
+                className="text-xs font-bold font-mono text-[#fb4934] hover:underline"
+              >
+                SCRUB
+              </button>
+              <button
+                onClick={onClose}
+                className="text-lg font-bold text-[#3c3836] hover:text-[#fb4934] px-1"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
 
-              {isStatusDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1 z-50 border-2 border-[#3c3836] shadow-[3px_3px_0px_#3c3836] bg-[#282828] min-w-[180px]">
-                  {statusKeys.map((key) => {
-                    const optBanner = bannerColors[key];
-                    const optConfig = STATUS_CONFIG[key];
+          {/* Job Title & Company */}
+          <div className="mb-4">
+            <h2 className="text-xl font-black text-[#282828] uppercase tracking-wide">
+              {job.title}
+            </h2>
+            <div className="text-sm font-bold text-[#d65d0e] uppercase tracking-wider mt-0.5">
+              {job.company}
+            </div>
+          </div>
 
-                    return (
-                      <div
-                        key={key}
-                        onClick={() => {
-                          onUpdateStatus(job.id, key);
-                          setIsStatusDropdownOpen(false);
-                        }}
-                        className="py-1.5 px-2.5 text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer hover:brightness-110"
-                        style={{ backgroundColor: optBanner.bg, color: optBanner.text }}
-                      >
-                        <div className="text-[10px] font-mono font-extrabold uppercase leading-tight">
-                          {optConfig.label}
-                        </div>
-                        <div className="text-[8.5px] font-mono font-normal opacity-85 uppercase leading-tight mt-0.5">
-                          {optConfig.sublabel}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          {/* Status Quick Switcher Dropdown */}
+          <div className="mb-5 bg-[#ebdbb2] border border-[#3c3836] p-3 rounded-sm">
+            <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1">
+              CURRENT FLIGHT STATUS
+            </div>
+            <div className="relative">
+              <select
+                value={job.status}
+                onChange={(e) => handleStatusUpdate(job.id, e.target.value as ApplicationStatus)}
+                className="w-full bg-[#fbf1c7] border border-[#3c3836] text-xs font-bold text-[#282828] p-2 pr-8 rounded-sm appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#d65d0e]"
+                style={{
+                  backgroundColor: currentBanner.bg,
+                  color: currentBanner.text
+                }}
+              >
+                {statusKeys.map((key) => {
+                  const cfg = STATUS_CONFIG[key];
+                  return (
+                    <option
+                      key={key}
+                      value={key}
+                      style={{
+                        backgroundColor: bannerColors[key].bg,
+                        color: bannerColors[key].text
+                      }}
+                    >
+                      {cfg.label} {cfg.sublabel}
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#3c3836]">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          {/* Flight Details Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-5 text-xs font-mono">
+            <div className="bg-[#ebdbb2]/60 border border-[#3c3836]/60 p-2.5 rounded-sm">
+              <div className="text-[10px] text-[#7c6f64] uppercase font-bold">LOCATION</div>
+              <div className="font-bold text-[#282828] mt-0.5">{job.location || 'N/A'}</div>
+            </div>
+            <div className="bg-[#ebdbb2]/60 border border-[#3c3836]/60 p-2.5 rounded-sm">
+              <div className="text-[10px] text-[#7c6f64] uppercase font-bold">SALARY / COMP</div>
+              <div className="font-bold text-[#282828] mt-0.5">{job.salary || 'N/A'}</div>
+            </div>
+            <div className="bg-[#ebdbb2]/60 border border-[#3c3836]/60 p-2.5 rounded-sm">
+              <div className="text-[10px] text-[#7c6f64] uppercase font-bold">DATE LOGGED</div>
+              <div className="font-bold text-[#282828] mt-0.5">{job.appliedDate}</div>
+            </div>
+            <div className="bg-[#ebdbb2]/60 border border-[#3c3836]/60 p-2.5 rounded-sm">
+              <div className="text-[10px] text-[#7c6f64] uppercase font-bold">APPLICATION LINK</div>
+              {job.url ? (
+                <a
+                  href={job.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#458588] hover:underline truncate block mt-0.5"
+                >
+                  OPEN LINK ↗
+                </a>
+              ) : (
+                <div className="font-bold text-[#7c6f64] mt-0.5">NONE</div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* 4. Tags & Keywords */}
-        {job.tags && job.tags.length > 0 && (
-          <div className="mb-3">
-            <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1">
-              [ TAGS & KEYWORDS ]
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {job.tags.map((tag, idx) => (
-                <span
-                  key={idx}
-                  className="bg-[#ebdbb2] border border-[#3c3836] px-2 py-0.5 text-[10px] font-mono font-bold uppercase text-[#282828]"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 5. Application Notes */}
-        <div className="mb-4">
-          <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1">
-            [ APPLICATION NOTES ]
-          </div>
-          <div className="bg-[#ebdbb2] border border-[#3c3836] p-2.5 rounded-sm text-xs font-mono text-[#282828] min-h-[50px]">
-            {job.notes || 'No operational notes attached to this dossier entry.'}
-          </div>
-        </div>
-
-        {/* 6. Timeline Log */}
-        {job.history && job.history.length > 0 && (
-          <div className="mb-4">
-            <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1.5">
-              [ FLIGHT ACTIVITY TIMELINE ]
-            </div>
-            <div className="bg-[#ebdbb2]/50 border border-[#3c3836] p-2 rounded-sm space-y-1.5 max-h-[100px] overflow-y-auto">
-              {job.history.map((entry, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-[10px] font-mono border-b border-dashed border-[#3c3836]/40 last:border-b-0 pb-1">
-                  <span className="text-[#665c54] shrink-0 font-bold">{entry.date}</span>
-                  <span className="font-bold uppercase text-[#d65d0e] shrink-0">
-                    [{STATUS_CONFIG[entry.status as ApplicationStatus]?.label || entry.status}]
+          {/* Tags */}
+          {job.tags && job.tags.length > 0 && (
+            <div className="mb-4">
+              <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1">
+                [ TAGS / METRICS ]
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {job.tags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="text-[10px] font-mono px-2 py-0.5 bg-[#ebdbb2] border border-[#3c3836] text-[#3c3836] font-bold"
+                  >
+                    #{tag}
                   </span>
-                  <span className="text-[#3c3836] truncate">{entry.note}</span>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          <div className="mb-4">
+            <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1">
+              [ APPLICATION NOTES ]
+            </div>
+            <div className="bg-[#ebdbb2] border border-[#3c3836] p-2.5 rounded-sm text-xs font-mono text-[#282828] min-h-[50px]">
+              {job.notes || 'No operational notes attached to this dossier entry.'}
             </div>
           </div>
-        )}
+
+          {/* 6. Timeline Log */}
+          {job.history && job.history.length > 0 && (
+            <div className="mb-4">
+              <div className="text-[10px] font-bold text-[#665c54] uppercase mb-1.5">
+                [ FLIGHT ACTIVITY TIMELINE ]
+              </div>
+              <div className="bg-[#ebdbb2]/50 border border-[#3c3836] p-2 rounded-sm space-y-1.5 max-h-[120px] overflow-y-auto">
+                {job.history.map((entry, idx) => {
+                  const statusKey = (entry.status || '').toLowerCase() as ApplicationStatus;
+                  const config = STATUS_CONFIG[statusKey];
+                  const label = config ? `${config.label} ${config.sublabel}` : entry.status;
+
+                  return (
+                    <div key={idx} className="flex items-start gap-2 text-[10px] font-mono border-b border-dashed border-[#3c3836]/40 last:border-b-0 pb-1">
+                      <span className="text-[#665c54] shrink-0 font-bold">{entry.date}</span>
+                      <span className="font-bold uppercase text-[#d65d0e] shrink-0">
+                        [{label}]
+                      </span>
+                      <span className="text-[#3c3836] truncate">{entry.note}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Footer Bar */}
         <div className="border-t-2 border-dashed border-[#3c3836] pt-3 flex items-center justify-between">
