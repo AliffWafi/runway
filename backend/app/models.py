@@ -7,6 +7,7 @@ import uuid
 class ApplicationStatus(str, Enum):
     TAXIING = "taxiing"
     HOLDING = "holding"
+    RADAR_CONTACT = "radar_contact"
     CLEARED_FOR_TAKEOFF = "cleared_for_takeoff"
     AIRBORNE = "airborne"
     RETURN_TO_GATE = "return_to_gate"

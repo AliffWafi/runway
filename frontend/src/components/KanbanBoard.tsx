@@ -19,10 +19,11 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
 
   const statusKeys = Object.keys(STATUS_CONFIG) as ApplicationStatus[];
 
-  // Banner Colors matching user sketch & reference image
+  // Banner Colors matching Gruvbox aesthetic & status identities
   const bannerColors: Record<ApplicationStatus, { bg: string; text: string }> = {
     taxiing: { bg: '#d5c4a1', text: '#282828' },              // Warm Sand
     holding: { bg: '#7c6f64', text: '#fbf1c7' },              // Warm Slate
+    radar_contact: { bg: '#fe8019', text: '#282828' },        // Gruvbox Orange
     cleared_for_takeoff: { bg: '#98971a', text: '#282828' },   // Olive Sage
     airborne: { bg: '#458588', text: '#fbf1c7' },             // Teal
     holding_pattern: { bg: '#fabd2f', text: '#282828' },      // Gold Amber
@@ -44,7 +45,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
   return (
     <div className="relative border-2 border-[#3c3836] rounded-md p-6 bg-[#ebdbb2]/30 min-h-[620px] flex flex-col justify-between">
       
-      {/* Corner Bracket Marks Framing as drawn in sketch */}
+      {/* Corner Bracket Marks Framing */}
       <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#3c3836]" />
       <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#3c3836]" />
       <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#3c3836]" />
@@ -65,7 +66,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
         {isLoading ? (
           <SkeletonGrid count={6} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             {jobs.map((job) => {
               const banner = bannerColors[job.status] || { bg: '#d5c4a1', text: '#282828' };
               const statusConfig = STATUS_CONFIG[job.status] || STATUS_CONFIG.taxiing;
@@ -110,7 +111,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
                       className="ticket-footer py-2.5 px-3 border-t-1.5 border-[#3c3836] flex items-center justify-between cursor-pointer hover:brightness-95 transition-all rounded-b-[3px]"
                       style={{ backgroundColor: banner.bg, color: banner.text }}
                     >
-                      <span className="text-[10px] font-mono font-extrabold uppercase tracking-wider leading-none">
+                      <span className="text-[9px] font-mono font-extrabold uppercase tracking-tight leading-none truncate">
                         {statusConfig.label}
                       </span>
                       
@@ -137,7 +138,7 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
                                 onUpdateStatus(job.id, key);
                                 setOpenDropdownId(null);
                               }}
-                              className={`py-2.5 px-3 text-[10px] font-mono font-extrabold uppercase tracking-wider text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer transition-all hover:brightness-110 active:brightness-90 ${
+                              className={`py-2 px-2.5 text-[9px] font-mono font-extrabold uppercase tracking-tight text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer transition-all hover:brightness-110 active:brightness-90 ${
                                 isCurrent ? 'ring-2 ring-inset ring-[#282828] font-black' : ''
                               }`}
                               style={{ backgroundColor: optBanner.bg, color: optBanner.text }}

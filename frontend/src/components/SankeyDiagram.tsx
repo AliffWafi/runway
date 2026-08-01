@@ -13,6 +13,7 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
   const counts: Record<ApplicationStatus, number> = {
     taxiing: jobs.filter(j => j.status === 'taxiing').length,
     holding: jobs.filter(j => j.status === 'holding').length,
+    radar_contact: jobs.filter(j => j.status === 'radar_contact').length,
     cleared_for_takeoff: jobs.filter(j => j.status === 'cleared_for_takeoff').length,
     airborne: jobs.filter(j => j.status === 'airborne').length,
     return_to_gate: jobs.filter(j => j.status === 'return_to_gate').length,
@@ -24,43 +25,47 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
     applied: '#458588',          // Blue/Teal
     taxiing: '#83a598',          // Soft Teal
     holding: '#7c6f64',          // Muted Slate
+    radar: '#fe8019',            // Gruvbox Orange
     cleared: '#98971a',          // Olive Sage
     airborne: '#8ec07c',         // Green
     rejected: '#ea696c',         // Red
     ghosted: '#fabd2f',          // Amber Yellow
   };
 
-  // SVG Dimension & Coordinate Grid (700x320 for generous text space)
-  const svgWidth = 700;
-  const svgHeight = 320;
+  // SVG Dimension & Coordinate Grid (750x360 for generous text space)
+  const svgWidth = 750;
+  const svgHeight = 360;
   const nodeWidth = 22;
 
   // X Coordinates for 3 Flow Stages
   const leftX = 40;
-  const midX = 320;
-  const rightX = 540;
+  const midX = 340;
+  const rightX = 580;
 
   // Y Coordinates and Heights
   const leftY = 40;
-  const leftH = 230;
+  const leftH = 260;
 
-  const taxiY = 40;
-  const taxiH = Math.max(28, (counts.taxiing / total) * 180);
+  const taxiY = 30;
+  const taxiH = Math.max(24, (counts.taxiing / total) * 160);
   
-  const holdY = 130;
-  const holdH = Math.max(28, (counts.holding / total) * 180);
+  const holdY = 105;
+  const holdH = Math.max(24, (counts.holding / total) * 160);
 
-  const clearedY = 220;
-  const clearedH = Math.max(28, (counts.cleared_for_takeoff / total) * 180);
+  const radarY = 180;
+  const radarH = Math.max(24, (counts.radar_contact / total) * 160);
+
+  const clearedY = 255;
+  const clearedH = Math.max(24, (counts.cleared_for_takeoff / total) * 160);
 
   const airY = 40;
-  const airH = Math.max(32, (counts.airborne / total) * 180);
+  const airH = Math.max(30, (counts.airborne / total) * 160);
 
-  const rejY = 135;
-  const rejH = Math.max(32, (counts.return_to_gate / total) * 180);
+  const rejY = 150;
+  const rejH = Math.max(30, (counts.return_to_gate / total) * 160);
 
-  const ghY = 230;
-  const ghH = Math.max(32, (counts.holding_pattern / total) * 180);
+  const ghY = 260;
+  const ghH = Math.max(30, (counts.holding_pattern / total) * 160);
 
   // Helper for Smooth Cubic Bezier Curves
   const createPath = (x1: number, y1: number, h1: number, x2: number, y2: number, h2: number) => {
@@ -79,13 +84,18 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
     <div className="w-full flex items-center justify-center select-none overflow-x-auto">
       <svg
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        className="w-full h-auto max-w-full max-h-[360px]"
+        className="w-full h-auto max-w-full max-h-[380px]"
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
           <linearGradient id="grad-applied-cleared" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={colors.applied} stopOpacity="0.45" />
             <stop offset="100%" stopColor={colors.cleared} stopOpacity="0.45" />
+          </linearGradient>
+
+          <linearGradient id="grad-applied-radar" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={colors.applied} stopOpacity="0.45" />
+            <stop offset="100%" stopColor={colors.radar} stopOpacity="0.45" />
           </linearGradient>
 
           <linearGradient id="grad-applied-holding" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -117,17 +127,22 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
         {/* --- BEZIER FLOW PATHS --- */}
         {/* Left -> Mid */}
         <path
-          d={createPath(leftX + nodeWidth, leftY, leftH * 0.35, midX, clearedY, clearedH)}
+          d={createPath(leftX + nodeWidth, leftY, leftH * 0.25, midX, clearedY, clearedH)}
           fill="url(#grad-applied-cleared)"
           className="transition-all hover:opacity-80"
         />
         <path
-          d={createPath(leftX + nodeWidth, leftY + leftH * 0.35, leftH * 0.35, midX, holdY, holdH)}
+          d={createPath(leftX + nodeWidth, leftY + leftH * 0.25, leftH * 0.25, midX, radarY, radarH)}
+          fill="url(#grad-applied-radar)"
+          className="transition-all hover:opacity-80"
+        />
+        <path
+          d={createPath(leftX + nodeWidth, leftY + leftH * 0.5, leftH * 0.25, midX, holdY, holdH)}
           fill="url(#grad-applied-holding)"
           className="transition-all hover:opacity-80"
         />
         <path
-          d={createPath(leftX + nodeWidth, leftY + leftH * 0.7, leftH * 0.3, midX, taxiY, taxiH)}
+          d={createPath(leftX + nodeWidth, leftY + leftH * 0.75, leftH * 0.25, midX, taxiY, taxiH)}
           fill="url(#grad-applied-taxiing)"
           className="transition-all hover:opacity-80"
         />
@@ -196,7 +211,19 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
           strokeWidth={1.5}
         />
 
-        {/* Mid 3: Cleared */}
+        {/* Mid 3: Radar Contact */}
+        <rect
+          x={midX}
+          y={radarY}
+          width={nodeWidth}
+          height={radarH}
+          fill={colors.radar}
+          rx={2}
+          stroke="#3c3836"
+          strokeWidth={1.5}
+        />
+
+        {/* Mid 4: Cleared */}
         <rect
           x={midX}
           y={clearedY}

@@ -39,6 +39,7 @@ export default function DiagnosticsPage() {
   }
 
   const totalApplied = jobs.length;
+  const totalRadar = jobs.filter(j => j.status === 'radar_contact').length;
   const totalRejected = jobs.filter(j => j.status === 'return_to_gate').length;
   const totalGhosted = jobs.filter(j => j.status === 'holding_pattern').length;
 
@@ -115,6 +116,7 @@ export default function DiagnosticsPage() {
                   {/* Bullet Points Stats */}
                   <div className="space-y-2.5 font-bold">
                     <div>• Total Flight Filed: <span className="text-[#fe8019]">{totalApplied}</span></div>
+                    <div>• Radar Contact (Viewed): <span className="text-[#fe8019]">{totalRadar}</span></div>
                     <div>• Returned to Gate (Rejection): <span className="text-[#ea696c]">{totalRejected}</span></div>
                     <div>• In Holding Pattern (Ghosted): <span className="text-[#fabd2f]">{totalGhosted}</span></div>
                     <div>• Coffee Consumed: <span className="text-[#458588]">&infin; cups</span></div>

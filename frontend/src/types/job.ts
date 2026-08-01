@@ -1,6 +1,7 @@
 export type ApplicationStatus = 
   | 'taxiing' 
   | 'holding' 
+  | 'radar_contact'
   | 'cleared_for_takeoff' 
   | 'airborne' 
   | 'return_to_gate' 
@@ -38,7 +39,7 @@ export interface StatusConfig {
 export const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
   taxiing: {
     id: 'taxiing',
-    label: 'Taxiing',
+    label: 'Taxiing (Applied)',
     sublabel: 'Applied',
     color: '#83a598', // Gruvbox Blue
     badgeClass: 'badge-taxiing',
@@ -46,31 +47,39 @@ export const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
   },
   holding: {
     id: 'holding',
-    label: 'Holding',
-    sublabel: 'Awaiting Response',
+    label: 'Holding (Waiting Response)',
+    sublabel: 'Waiting Response',
     color: '#8ec07c', // Gruvbox Aqua
     badgeClass: 'badge-holding',
     description: 'In queue awaiting recruiter or hiring manager response'
   },
+  radar_contact: {
+    id: 'radar_contact',
+    label: 'Radar Contact (Viewed)',
+    sublabel: 'Viewed',
+    color: '#fe8019', // Gruvbox Orange
+    badgeClass: 'badge-radar',
+    description: 'Recruiter or hiring manager acquired radar contact / viewed application'
+  },
   cleared_for_takeoff: {
     id: 'cleared_for_takeoff',
-    label: 'Cleared for Takeoff',
-    sublabel: 'Interview / Assessment',
+    label: 'Cleared for Takeoff (Assessment/Interview)',
+    sublabel: 'Assessment/Interview',
     color: '#fabd2f', // Gruvbox Yellow
     badgeClass: 'badge-cleared',
     description: 'Active interviews and technical assessment in progress'
   },
   airborne: {
     id: 'airborne',
-    label: 'Airborne ✈️',
-    sublabel: 'Secured Job',
+    label: 'Airborne (Job Secured) ✈️',
+    sublabel: 'Job Secured',
     color: '#b8bb26', // Gruvbox Green
     badgeClass: 'badge-airborne',
     description: 'Job offer extended & flight path secured!'
   },
   return_to_gate: {
     id: 'return_to_gate',
-    label: 'Return to Gate',
+    label: 'Return to Gate (Rejected)',
     sublabel: 'Rejected',
     color: '#fb4934', // Gruvbox Red
     badgeClass: 'badge-gate',
@@ -78,7 +87,7 @@ export const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
   },
   holding_pattern: {
     id: 'holding_pattern',
-    label: 'Holding Pattern 🌀',
+    label: 'Holding Pattern (Ghosted) 🌀',
     sublabel: 'Ghosted (>30 days)',
     color: '#d3869b', // Gruvbox Purple
     badgeClass: 'badge-pattern',
@@ -112,61 +121,12 @@ export const INITIAL_JOBS: JobApplication[] = [
     salary: '$165,000 - $190,000',
     url: 'https://vercel.com/careers',
     appliedDate: '2026-07-22',
-    status: 'holding',
+    status: 'radar_contact',
     tags: ['Hybrid', 'Next.js', 'DevTools'],
-    notes: 'Applied on career page. Highlighted Next.js App Router experience.',
+    notes: 'Application viewed on career portal.',
     history: [
       { status: 'taxiing', date: '2026-07-22', note: 'Submitted resume.' },
-      { status: 'holding', date: '2026-07-24', note: 'Application under review.' }
-    ]
-  },
-  {
-    id: 'job-3',
-    company: 'Figma',
-    title: 'Design Systems Developer',
-    location: 'Remote',
-    salary: '$170,000 - $200,000',
-    url: 'https://figma.com/careers',
-    appliedDate: '2026-07-15',
-    status: 'airborne',
-    tags: ['Remote', 'UI/UX', 'TypeScript'],
-    notes: 'Official offer letter received! Evaluating equity package and perks.',
-    history: [
-      { status: 'taxiing', date: '2026-07-15', note: 'Applied online.' },
-      { status: 'holding', date: '2026-07-18', note: 'Recruiter screen.' },
-      { status: 'cleared_for_takeoff', date: '2026-07-21', note: 'Onsite loop completed.' },
-      { status: 'airborne', date: '2026-07-26', note: 'Received official offer!' }
-    ]
-  },
-  {
-    id: 'job-4',
-    company: 'Linear',
-    title: 'Full Stack Engineer',
-    location: 'Remote',
-    salary: '$160,000 - $185,000',
-    url: 'https://linear.app/careers',
-    appliedDate: '2026-06-15',
-    status: 'holding_pattern',
-    tags: ['Remote', 'Node.js', 'GraphQL'],
-    notes: 'No response received for over 40 days.',
-    history: [
-      { status: 'taxiing', date: '2026-06-15', note: 'Applied.' },
-      { status: 'holding_pattern', date: '2026-07-25', note: 'Flagged as holding pattern (ghosted).' }
-    ]
-  },
-  {
-    id: 'job-5',
-    company: 'Airbnb',
-    title: 'Staff UI Engineer',
-    location: 'San Francisco, CA',
-    salary: '$200,000 - $240,000',
-    url: 'https://careers.airbnb.com',
-    appliedDate: '2026-07-10',
-    status: 'taxiing',
-    tags: ['Onsite', 'Architecture', 'Design System'],
-    notes: 'Submitted application with referral code.',
-    history: [
-      { status: 'taxiing', date: '2026-07-10', note: 'Taxiing on runway.' }
+      { status: 'radar_contact', date: '2026-07-24', note: 'Application viewed by recruiter.' }
     ]
   }
 ];
