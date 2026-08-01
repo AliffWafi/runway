@@ -4,26 +4,33 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./runway.db")
+RAW_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./runway.db")
 
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+def create_safe_engine(url: str):
+    if not url:
+        url = "sqlite:///./runway.db"
+    
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
 
-connect_args = {}
-if "sqlite" in DATABASE_URL:
-    connect_args["check_same_thread"] = False
-elif ("postgresql" in DATABASE_URL or "postgres" in DATABASE_URL) and "sslmode" not in DATABASE_URL:
-    if "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL:
-        connect_args["sslmode"] = "require"
+    connect_args = {}
+    if "sqlite" in url:
+        connect_args["check_same_thread"] = False
+    elif ("postgresql" in url or "postgres" in url) and "sslmode" not in url:
+        if "localhost" not in url and "127.0.0.1" not in url:
+            connect_args["sslmode"] = "require"
 
-engine = create_engine(
-    DATABASE_URL, 
-    echo=False, 
-    connect_args=connect_args,
-    pool_pre_ping=True
-)
+    try:
+        return create_engine(url, echo=False, connect_args=connect_args, pool_pre_ping=True), url
+    except Exception as e:
+        print(f"Failed to create database engine ({e}), using safe fallback...")
+        fallback_url = "sqlite:///./runway.db"
+        return create_engine(fallback_url, echo=False, connect_args={"check_same_thread": False}), fallback_url
+
+engine, DATABASE_URL = create_safe_engine(RAW_DATABASE_URL)
 
 def init_db():
+    global engine, DATABASE_URL
     try:
         SQLModel.metadata.create_all(engine)
         with Session(engine) as session:
