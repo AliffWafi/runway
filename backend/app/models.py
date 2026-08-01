@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import date, datetime
 from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
@@ -43,7 +43,7 @@ class Token(SQLModel):
 
 # --- JOB MODELS ---
 class ActivityLogBase(SQLModel):
-    status: ApplicationStatus
+    status: str
     date: str
     note: Optional[str] = None
 
@@ -61,7 +61,7 @@ class JobApplicationBase(SQLModel):
     salary: Optional[str] = None
     url: Optional[str] = None
     applied_date: str = Field(default_factory=lambda: date.today().isoformat())
-    status: ApplicationStatus = Field(default=ApplicationStatus.TAXIING)
+    status: str = Field(default="taxiing")
     notes: Optional[str] = None
     tags: Optional[str] = None
 
@@ -83,7 +83,7 @@ class JobApplicationUpdate(SQLModel):
     salary: Optional[str] = None
     url: Optional[str] = None
     applied_date: Optional[str] = None
-    status: Optional[ApplicationStatus] = None
+    status: Optional[str] = None
     notes: Optional[str] = None
     tags_list: Optional[List[str]] = None
 
