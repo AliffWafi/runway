@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { JobApplication, STATUS_CONFIG, ApplicationStatus } from '../types/job';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 
 interface JobModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (formData: Partial<JobApplication>) => void;
+  onSave: (formData: Partial<JobApplication>) => Promise<void> | void;
   editingJob: JobApplication | null;
   initialStatus?: ApplicationStatus;
 }
@@ -26,6 +26,8 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
   });
 
   const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const statusKeys = Object.keys(STATUS_CONFIG) as ApplicationStatus[];
 
   const bannerColors: Record<ApplicationStatus, { bg: string; text: string }> = {
@@ -39,6 +41,7 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
   };
 
   useEffect(() => {
+    setIsSubmitting(false);
     if (editingJob) {
       setFormData({
         company: editingJob.company || '',
@@ -58,7 +61,7 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
         location: '',
         salary: '',
         url: '',
-        appliedDate: initialStatus || 'taxiing',
+        appliedDate: new Date().toISOString().split('T')[0],
         status: initialStatus || 'taxiing',
         tags: '',
         notes: ''
@@ -68,18 +71,25 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.company.trim() || !formData.title.trim()) return;
+    if (!formData.company.trim() || !formData.title.trim() || isSubmitting) return;
 
     const formattedTags = formData.tags
       ? formData.tags.split(',').map(t => t.trim()).filter(Boolean)
       : [];
 
-    onSave({
-      ...formData,
-      tags: formattedTags
-    });
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        ...formData,
+        tags: formattedTags
+      });
+    } catch (err) {
+      console.error('Error submitting form:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const currentStatusConfig = STATUS_CONFIG[formData.status] || STATUS_CONFIG.taxiing;
@@ -117,111 +127,108 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
               <input
                 type="text"
                 required
-                placeholder="e.g. MAYBANK"
+                placeholder="e.g. Stripe, Vercel"
                 value={formData.company}
                 onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                className="flex-1 bg-transparent border-b-2 border-[#3c3836] px-1 py-0.5 font-bold text-xs text-[#282828] outline-none focus:border-[#fe8019]"
+                className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
               />
             </div>
 
             <div className="flex items-center gap-2">
               <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
-                ROLE
+                ROLE / TITLE
               </div>
               <input
                 type="text"
                 required
-                placeholder="e.g. PROTEGE"
+                placeholder="e.g. Frontend Dev"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="flex-1 bg-transparent border-b-2 border-[#3c3836] px-1 py-0.5 font-bold text-xs text-[#282828] outline-none focus:border-[#fe8019]"
+                className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
               />
             </div>
           </div>
 
-          {/* Row 2: [ DATE ] __________   [ LOCATION ] __________ */}
+          {/* Row 2: [ LOCATION ] __________ [ SALARY / COMP ] __________ */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
-                DATE
-              </div>
-              <input
-                type="date"
-                value={formData.appliedDate}
-                onChange={(e) => setFormData({ ...formData, appliedDate: e.target.value })}
-                className="flex-1 bg-transparent border-b-2 border-[#3c3836] px-1 py-0.5 font-mono text-xs text-[#282828] outline-none focus:border-[#fe8019]"
-              />
-            </div>
-
             <div className="flex items-center gap-2">
               <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
                 LOCATION
               </div>
               <input
                 type="text"
-                placeholder="e.g. KL"
+                placeholder="e.g. Remote, San Francisco"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="flex-1 bg-transparent border-b-2 border-[#3c3836] px-1 py-0.5 font-bold text-xs text-[#282828] outline-none focus:border-[#fe8019]"
+                className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
+                SALARY/COMP
+              </div>
+              <input
+                type="text"
+                placeholder="e.g. $140k/yr, RM8,000"
+                value={formData.salary}
+                onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
               />
             </div>
           </div>
 
-          {/* Row 3: Compensation & Listing URL */}
+          {/* Row 3: [ LINK / URL ] __________ [ DATE LOGGED ] [ YYYY-MM-DD ] */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
             <div className="flex items-center gap-2">
               <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
-                SALARY
-              </div>
-              <input
-                type="text"
-                placeholder="e.g. RM 3,500"
-                value={formData.salary}
-                onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                className="flex-1 bg-transparent border-b-2 border-[#3c3836] px-1 py-0.5 font-mono text-xs text-[#282828] outline-none focus:border-[#fe8019]"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
-                LINK
+                LINK / URL
               </div>
               <input
                 type="url"
                 placeholder="https://..."
                 value={formData.url}
                 onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                className="flex-1 bg-transparent border-b-2 border-[#3c3836] px-1 py-0.5 text-xs text-[#282828] outline-none focus:border-[#fe8019]"
+                className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
+                DATE LOGGED
+              </div>
+              <input
+                type="date"
+                value={formData.appliedDate}
+                onChange={(e) => setFormData({ ...formData, appliedDate: e.target.value })}
+                className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
               />
             </div>
           </div>
 
-          {/* Row 4 (Center): [ STATUS ] [ DROPDOWN ] */}
-          <div className="flex items-center justify-center gap-3 pt-1">
-            <div className="bg-[#ebdbb2] border border-[#3c3836] px-3 py-1 font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
-              STATUS
+          {/* Row 4: [ STATUS ] Custom Retro Banner Selector */}
+          <div className="flex items-center gap-2">
+            <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
+              FLIGHT STATUS
             </div>
-
-            <div className="relative">
+            
+            <div className="relative flex-1">
               <button
                 type="button"
                 onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                className="border border-[#3c3836] px-3 py-1 font-mono text-[10px] uppercase shadow-[1px_1px_0px_#3c3836] flex items-center justify-between gap-2 transition-all min-w-[160px]"
+                className="w-full border border-[#3c3836] px-3 py-1 font-extrabold text-xs uppercase shadow-[2px_2px_0px_#3c3836] flex items-center justify-between transition-all"
                 style={{ backgroundColor: currentBanner.bg, color: currentBanner.text }}
               >
-                <div className="flex flex-col text-left leading-tight overflow-hidden">
-                  <span className="font-extrabold truncate">{currentStatusConfig.label}</span>
-                  <span className="font-normal opacity-85 text-[8.5px] truncate">{currentStatusConfig.sublabel}</span>
-                </div>
-                <ChevronDown className="w-3.5 h-3.5 opacity-80 shrink-0 ml-1" />
+                <span>{currentStatusConfig.label} {currentStatusConfig.sublabel}</span>
+                <ChevronDown className="w-4 h-4 ml-1" />
               </button>
 
-              {/* Custom Gruvbox Dropdown Menu */}
+              {/* Status Select Options Menu */}
               {isStatusDropdownOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1 z-50 border-2 border-[#3c3836] shadow-[3px_3px_0px_#3c3836] bg-[#282828] min-w-[180px]">
+                <div className="absolute left-0 right-0 top-full mt-1 z-50 border-2 border-[#3c3836] shadow-[4px_4px_0px_#3c3836] bg-[#282828]">
                   {statusKeys.map((key) => {
-                    const optBanner = bannerColors[key];
-                    const optConfig = STATUS_CONFIG[key];
+                    const banner = bannerColors[key];
+                    const cfg = STATUS_CONFIG[key];
 
                     return (
                       <div
@@ -230,21 +237,44 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
                           setFormData({ ...formData, status: key });
                           setIsStatusDropdownOpen(false);
                         }}
-                        className="py-1.5 px-3 text-center border-b border-[#3c3836] last:border-b-0 cursor-pointer hover:brightness-110"
-                        style={{ backgroundColor: optBanner.bg, color: optBanner.text }}
+                        className="py-1.5 px-3 text-xs font-mono font-bold uppercase cursor-pointer hover:brightness-110 flex items-center justify-between border-b border-[#3c3836] last:border-b-0"
+                        style={{ backgroundColor: banner.bg, color: banner.text }}
                       >
-                        <div className="text-[10px] font-mono font-extrabold uppercase leading-tight">
-                          {optConfig.label}
-                        </div>
-                        <div className="text-[8.5px] font-mono font-normal opacity-85 uppercase leading-tight mt-0.5">
-                          {optConfig.sublabel}
-                        </div>
+                        <span>{cfg.label} {cfg.sublabel}</span>
                       </div>
                     );
                   })}
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Row 5: [ TAGS / METRICS ] comma separated tags */}
+          <div className="flex items-center gap-2">
+            <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 text-center min-w-[85px] font-bold text-[10px] shadow-[1px_1px_0px_#3c3836]">
+              TAGS (COMMA)
+            </div>
+            <input
+              type="text"
+              placeholder="e.g. React, Remote, High Priority"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              className="w-full bg-[#fbf1c7] border-b-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none px-1 py-0.5 font-mono text-xs font-bold"
+            />
+          </div>
+
+          {/* Row 6: [ LOG NOTES ] multiline operational memo */}
+          <div>
+            <div className="bg-[#ebdbb2] border border-[#3c3836] px-2.5 py-0.5 inline-block font-bold text-[10px] shadow-[1px_1px_0px_#3c3836] mb-1.5">
+              OPERATIONAL LOG NOTES
+            </div>
+            <textarea
+              rows={2}
+              placeholder="Add interview notes, recruiter contacts, follow-up dates..."
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full bg-[#ebdbb2]/40 border-2 border-[#3c3836] focus:border-[#d65d0e] focus:outline-none p-2 font-mono text-xs font-bold rounded-sm resize-none"
+            />
           </div>
 
           {/* Dashed Horizontal Line Separator */}
@@ -261,17 +291,26 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
               <button
                 type="button"
                 onClick={onClose}
-                className="bg-[#ea696c] hover:bg-[#fb4934] text-[#282828] font-mono font-extrabold text-xs px-4 py-1 border border-[#3c3836] shadow-[2px_2px_0px_#3c3836] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase"
+                disabled={isSubmitting}
+                className="bg-[#ea696c] hover:bg-[#fb4934] text-[#282828] font-mono font-extrabold text-xs px-4 py-1 border border-[#3c3836] shadow-[2px_2px_0px_#3c3836] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase disabled:opacity-50 cursor-pointer"
               >
                 {editingJob ? 'REVERT' : 'ABORT'}
               </button>
 
-              {/* Add / Update Button */}
+              {/* Add / Update Button with Loading Spinner */}
               <button
                 type="submit"
-                className="bg-[#458588] hover:bg-[#83a598] text-[#fbf1c7] font-mono font-extrabold text-xs px-4 py-1 border border-[#3c3836] shadow-[2px_2px_0px_#3c3836] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase"
+                disabled={isSubmitting}
+                className="bg-[#458588] hover:bg-[#83a598] text-[#fbf1c7] font-mono font-extrabold text-xs px-4 py-1 border border-[#3c3836] shadow-[2px_2px_0px_#3c3836] active:translate-x-0.5 active:translate-y-0.5 transition-all uppercase flex items-center gap-1.5 disabled:opacity-60 cursor-pointer"
               >
-                {editingJob ? 'UPDATE' : 'ADD'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>{editingJob ? 'UPDATING...' : 'ADDING...'}</span>
+                  </>
+                ) : (
+                  <span>{editingJob ? 'UPDATE' : 'ADD'}</span>
+                )}
               </button>
             </div>
           </div>
