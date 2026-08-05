@@ -12,6 +12,7 @@ class ApplicationStatus(str, Enum):
     AIRBORNE = "airborne"
     RETURN_TO_GATE = "return_to_gate"
     HOLDING_PATTERN = "holding_pattern"
+    GROUNDED = "grounded"
 
 # --- USER MODELS ---
 class UserBase(SQLModel):

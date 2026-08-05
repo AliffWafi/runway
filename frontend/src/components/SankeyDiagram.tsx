@@ -18,6 +18,7 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
     airborne: jobs.filter(j => j.status === 'airborne').length,
     return_to_gate: jobs.filter(j => j.status === 'return_to_gate').length,
     holding_pattern: jobs.filter(j => j.status === 'holding_pattern').length,
+    grounded: jobs.filter(j => j.status === 'grounded').length,
   };
 
   // Gruvbox Palette Colors
@@ -30,12 +31,12 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
     airborne: '#8ec07c',         // Green
     rejected: '#ea696c',         // Red
     ghosted: '#fabd2f',          // Amber Yellow
+    grounded: '#928374',         // Gray/Taupe
   };
 
   // SVG Dimension & Coordinate Grid (750x360 for generous text space)
   const svgWidth = 750;
   const svgHeight = 360;
-  const nodeWidth = 22;
 
   // X Coordinates for 3 Flow Stages
   const leftX = 40;
@@ -98,202 +99,100 @@ export function SankeyDiagram({ jobs }: SankeyDiagramProps) {
             <stop offset="100%" stopColor={colors.radar} stopOpacity="0.45" />
           </linearGradient>
 
-          <linearGradient id="grad-applied-holding" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={colors.applied} stopOpacity="0.45" />
-            <stop offset="100%" stopColor={colors.holding} stopOpacity="0.45" />
-          </linearGradient>
-
-          <linearGradient id="grad-applied-taxiing" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="grad-applied-taxi" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={colors.applied} stopOpacity="0.45" />
             <stop offset="100%" stopColor={colors.taxiing} stopOpacity="0.45" />
           </linearGradient>
 
-          <linearGradient id="grad-cleared-airborne" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id="grad-applied-hold" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={colors.applied} stopOpacity="0.45" />
+            <stop offset="100%" stopColor={colors.holding} stopOpacity="0.45" />
+          </linearGradient>
+
+          <linearGradient id="grad-cleared-air" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={colors.cleared} stopOpacity="0.45" />
             <stop offset="100%" stopColor={colors.airborne} stopOpacity="0.45" />
           </linearGradient>
 
-          <linearGradient id="grad-holding-rejected" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={colors.holding} stopOpacity="0.45" />
+          <linearGradient id="grad-cleared-rej" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={colors.cleared} stopOpacity="0.45" />
             <stop offset="100%" stopColor={colors.rejected} stopOpacity="0.45" />
           </linearGradient>
 
-          <linearGradient id="grad-taxiing-ghosted" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={colors.taxiing} stopOpacity="0.45" />
+          <linearGradient id="grad-hold-gh" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={colors.holding} stopOpacity="0.45" />
             <stop offset="100%" stopColor={colors.ghosted} stopOpacity="0.45" />
           </linearGradient>
         </defs>
 
-        {/* --- BEZIER FLOW PATHS --- */}
-        {/* Left -> Mid */}
-        <path
-          d={createPath(leftX + nodeWidth, leftY, leftH * 0.25, midX, clearedY, clearedH)}
-          fill="url(#grad-applied-cleared)"
-          className="transition-all hover:opacity-80"
-        />
-        <path
-          d={createPath(leftX + nodeWidth, leftY + leftH * 0.25, leftH * 0.25, midX, radarY, radarH)}
-          fill="url(#grad-applied-radar)"
-          className="transition-all hover:opacity-80"
-        />
-        <path
-          d={createPath(leftX + nodeWidth, leftY + leftH * 0.5, leftH * 0.25, midX, holdY, holdH)}
-          fill="url(#grad-applied-holding)"
-          className="transition-all hover:opacity-80"
-        />
-        <path
-          d={createPath(leftX + nodeWidth, leftY + leftH * 0.75, leftH * 0.25, midX, taxiY, taxiH)}
-          fill="url(#grad-applied-taxiing)"
-          className="transition-all hover:opacity-80"
-        />
+        {/* --- FLOW PATHS --- */}
+        <path d={createPath(leftX + 22, leftY, leftH * 0.25, midX, taxiY, taxiH)} fill="url(#grad-applied-taxi)" />
+        <path d={createPath(leftX + 22, leftY + leftH * 0.25, leftH * 0.25, midX, holdY, holdH)} fill="url(#grad-applied-hold)" />
+        <path d={createPath(leftX + 22, leftY + leftH * 0.5, leftH * 0.25, midX, radarY, radarH)} fill="url(#grad-applied-radar)" />
+        <path d={createPath(leftX + 22, leftY + leftH * 0.75, leftH * 0.25, midX, clearedY, clearedH)} fill="url(#grad-applied-cleared)" />
 
-        {/* Mid -> Right */}
-        <path
-          d={createPath(midX + nodeWidth, clearedY, clearedH, rightX, airY, airH)}
-          fill="url(#grad-cleared-airborne)"
-          className="transition-all hover:opacity-80"
-        />
-        <path
-          d={createPath(midX + nodeWidth, holdY, holdH, rightX, rejY, rejH)}
-          fill="url(#grad-holding-rejected)"
-          className="transition-all hover:opacity-80"
-        />
-        <path
-          d={createPath(midX + nodeWidth, taxiY, taxiH, rightX, ghY, ghH)}
-          fill="url(#grad-taxiing-ghosted)"
-          className="transition-all hover:opacity-80"
-        />
+        <path d={createPath(midX + 22, clearedY, clearedH * 0.5, rightX, airY, airH)} fill="url(#grad-cleared-air)" />
+        <path d={createPath(midX + 22, clearedY + clearedH * 0.5, clearedH * 0.5, rightX, rejY, rejH)} fill="url(#grad-cleared-rej)" />
+        <path d={createPath(midX + 22, holdY, holdH, rightX, ghY, ghH)} fill="url(#grad-hold-gh)" />
 
-        {/* --- NODE BARS & LABELS --- */}
+        {/* --- STAGE 1: APPLIED --- */}
+        <g transform={`translate(${leftX}, ${leftY})`}>
+          <rect width="22" height={leftH} fill={colors.applied} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="-12" y={leftH / 2} fill="#282828" fontSize="12" fontWeight="bold" fontFamily="monospace" textAnchor="end" dominantBaseline="middle">
+            APPLIED ({jobs.length})
+          </text>
+        </g>
 
-        {/* Left: Total Applied */}
-        <rect
-          x={leftX}
-          y={leftY}
-          width={nodeWidth}
-          height={leftH}
-          fill={colors.applied}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
-        <text
-          x={leftX - 8}
-          y={leftY + leftH / 2}
-          textAnchor="end"
-          dominantBaseline="middle"
-          className="fill-[#282828] font-mono text-[10px] font-bold uppercase"
-        >
-          FILED ({jobs.length})
-        </text>
+        {/* --- STAGE 2: PROCESS --- */}
+        <g transform={`translate(${midX}, ${taxiY})`}>
+          <rect width="22" height={taxiH} fill={colors.taxiing} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={taxiH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Taxiing (Applied) ({counts.taxiing})
+          </text>
+        </g>
 
-        {/* Mid 1: Taxiing */}
-        <rect
-          x={midX}
-          y={taxiY}
-          width={nodeWidth}
-          height={taxiH}
-          fill={colors.taxiing}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
+        <g transform={`translate(${midX}, ${holdY})`}>
+          <rect width="22" height={holdH} fill={colors.holding} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={holdH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Holding (Waiting) ({counts.holding})
+          </text>
+        </g>
 
-        {/* Mid 2: Holding */}
-        <rect
-          x={midX}
-          y={holdY}
-          width={nodeWidth}
-          height={holdH}
-          fill={colors.holding}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
+        <g transform={`translate(${midX}, ${radarY})`}>
+          <rect width="22" height={radarH} fill={colors.radar} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={radarH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Radar Contact (Viewed) ({counts.radar_contact})
+          </text>
+        </g>
 
-        {/* Mid 3: Radar Contact */}
-        <rect
-          x={midX}
-          y={radarY}
-          width={nodeWidth}
-          height={radarH}
-          fill={colors.radar}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
+        <g transform={`translate(${midX}, ${clearedY})`}>
+          <rect width="22" height={clearedH} fill={colors.cleared} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={clearedH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Cleared for Takeoff ({counts.cleared_for_takeoff})
+          </text>
+        </g>
 
-        {/* Mid 4: Cleared */}
-        <rect
-          x={midX}
-          y={clearedY}
-          width={nodeWidth}
-          height={clearedH}
-          fill={colors.cleared}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
+        {/* --- STAGE 3: OUTCOME --- */}
+        <g transform={`translate(${rightX}, ${airY})`}>
+          <rect width="22" height={airH} fill={colors.airborne} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={airH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Airborne ✈️ ({counts.airborne})
+          </text>
+        </g>
 
-        {/* Right 1: Airborne */}
-        <rect
-          x={rightX}
-          y={airY}
-          width={nodeWidth}
-          height={airH}
-          fill={colors.airborne}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
-        <text
-          x={rightX + nodeWidth + 8}
-          y={airY + airH / 2}
-          dominantBaseline="middle"
-          className="fill-[#282828] font-mono text-[10px] font-bold uppercase"
-        >
-          AIRBORNE ({counts.airborne})
-        </text>
+        <g transform={`translate(${rightX}, ${rejY})`}>
+          <rect width="22" height={rejH} fill={colors.rejected} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={rejH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Return to Gate ({counts.return_to_gate})
+          </text>
+        </g>
 
-        {/* Right 2: Return to Gate (Rejected) */}
-        <rect
-          x={rightX}
-          y={rejY}
-          width={nodeWidth}
-          height={rejH}
-          fill={colors.rejected}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
-        <text
-          x={rightX + nodeWidth + 8}
-          y={rejY + rejH / 2}
-          dominantBaseline="middle"
-          className="fill-[#282828] font-mono text-[10px] font-bold uppercase"
-        >
-          REJECTED ({counts.return_to_gate})
-        </text>
-
-        {/* Right 3: Holding Pattern (Ghosted) */}
-        <rect
-          x={rightX}
-          y={ghY}
-          width={nodeWidth}
-          height={ghH}
-          fill={colors.ghosted}
-          rx={2}
-          stroke="#3c3836"
-          strokeWidth={1.5}
-        />
-        <text
-          x={rightX + nodeWidth + 8}
-          y={ghY + ghH / 2}
-          dominantBaseline="middle"
-          className="fill-[#282828] font-mono text-[10px] font-bold uppercase"
-        >
-          GHOSTED ({counts.holding_pattern})
-        </text>
+        <g transform={`translate(${rightX}, ${ghY})`}>
+          <rect width="22" height={ghH} fill={colors.ghosted} rx="3" className="stroke-1 stroke-[#3c3836]" />
+          <text x="30" y={ghH / 2} fill="#282828" fontSize="11" fontWeight="bold" fontFamily="monospace" dominantBaseline="middle">
+            Holding Pattern 🌀 ({counts.holding_pattern})
+          </text>
+        </g>
       </svg>
     </div>
   );

@@ -37,7 +37,8 @@ export function JobModal({ isOpen, onClose, onSave, editingJob, initialStatus }:
     cleared_for_takeoff: { bg: '#98971a', text: '#282828' },
     airborne: { bg: '#458588', text: '#fbf1c7' },
     holding_pattern: { bg: '#fabd2f', text: '#282828' },
-    return_to_gate: { bg: '#ea696c', text: '#282828' }
+    return_to_gate: { bg: '#ea696c', text: '#282828' },
+    grounded: { bg: '#928374', text: '#fbf1c7' }
   };
 
   useEffect(() => {

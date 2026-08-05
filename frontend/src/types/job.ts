@@ -5,7 +5,8 @@ export type ApplicationStatus =
   | 'cleared_for_takeoff' 
   | 'airborne' 
   | 'return_to_gate' 
-  | 'holding_pattern';
+  | 'holding_pattern'
+  | 'grounded';
 
 export interface ActivityLog {
   status: ApplicationStatus;
@@ -92,6 +93,14 @@ export const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
     color: '#d3869b', // Gruvbox Purple
     badgeClass: 'badge-pattern',
     description: 'No response or update received for over 30 days'
+  },
+  grounded: {
+    id: 'grounded',
+    label: 'Grounded 🚫',
+    sublabel: '(Closed/Expired)',
+    color: '#928374', // Gruvbox Gray
+    badgeClass: 'badge-grounded',
+    description: 'Position listing closed or application expired'
   }
 };
 

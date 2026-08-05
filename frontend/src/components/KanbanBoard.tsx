@@ -27,7 +27,8 @@ export function KanbanBoard({ jobs, isLoading, onOpenDetail, onOpenAddModal, onU
     cleared_for_takeoff: { bg: '#98971a', text: '#282828' },   // Olive Sage
     airborne: { bg: '#458588', text: '#fbf1c7' },             // Teal
     holding_pattern: { bg: '#fabd2f', text: '#282828' },      // Gold Amber
-    return_to_gate: { bg: '#ea696c', text: '#282828' }        // Coral Red
+    return_to_gate: { bg: '#ea696c', text: '#282828' },       // Coral Red
+    grounded: { bg: '#928374', text: '#fbf1c7' }              // Gruvbox Gray
   };
 
   // Fixed Chronological Sorting: Earlier to Latest Applied / Created
