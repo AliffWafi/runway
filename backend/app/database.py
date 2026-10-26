@@ -4,48 +4,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Default to production Supabase Pooler if DATABASE_URL is unset
-SUPABASE_DEFAULT_URL = "postgresql://postgres.jysaelbytthufdhgksuu:SWQAzlxON2STrKFU@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
-RAW_DATABASE_URL = os.getenv("DATABASE_URL") or SUPABASE_DEFAULT_URL
+RAW_DATABASE_URL = os.getenv("DATABASE_URL")
+if not RAW_DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is not set. Refusing to start without the Supabase database.")
 
-def create_safe_engine(url: str):
-    if not url:
-        url = SUPABASE_DEFAULT_URL
-    
+
+def normalize_database_url(url: str) -> str:
+    # SQLAlchemy 2.1+ maps plain "postgresql://" to the psycopg (v3) driver, which is not installed.
+    # Pin the driver explicitly to psycopg2 so the engine always uses psycopg2-binary.
     if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
+        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    return url
 
-    connect_args = {}
-    if "sqlite" in url:
-        connect_args["check_same_thread"] = False
-    elif ("postgresql" in url or "postgres" in url) and "sslmode" not in url:
-        if "localhost" not in url and "127.0.0.1" not in url:
-            connect_args["sslmode"] = "require"
 
-    try:
-        return create_engine(url, echo=False, connect_args=connect_args, pool_pre_ping=True), url
-    except Exception as e:
-        print(f"Failed to create database engine ({e}), using safe fallback...")
-        fallback_url = "sqlite:///./runway.db"
-        return create_engine(fallback_url, echo=False, connect_args={"check_same_thread": False}), fallback_url
+DATABASE_URL = normalize_database_url(RAW_DATABASE_URL)
 
-engine, DATABASE_URL = create_safe_engine(RAW_DATABASE_URL)
+connect_args = {}
+if "sqlite" in DATABASE_URL:
+    connect_args["check_same_thread"] = False
+elif "sslmode" not in DATABASE_URL and "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL:
+    connect_args["sslmode"] = "require"
+
+# No silent SQLite fallback: if Supabase is unreachable, fail loudly instead of serving an empty database.
+engine = create_engine(DATABASE_URL, echo=False, connect_args=connect_args, pool_pre_ping=True)
+print(f"Database engine initialised with driver: {engine.url.drivername} host: {engine.url.host}")
+
 
 def init_db():
-    global engine, DATABASE_URL
-    try:
-        SQLModel.metadata.create_all(engine)
-    except Exception as e:
-        print(f"init_db failed with primary engine ({e}), falling back to SQLite...")
-        try:
-            DATABASE_URL = "sqlite:///./runway.db"
-            engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
-            SQLModel.metadata.create_all(engine)
-        except Exception as err:
-            print(f"Fallback init_db warning: {err}")
+    SQLModel.metadata.create_all(engine)
 
-    try:
-        if "postgresql" in DATABASE_URL or "postgres" in DATABASE_URL:
+    if engine.url.drivername.startswith("postgresql"):
+        try:
             with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
                 try:
                     conn.execute(text("ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS user_id UUID;"))
@@ -59,13 +50,14 @@ def init_db():
                     conn.execute(text("ALTER TABLE job_applications ALTER COLUMN status TYPE VARCHAR USING status::VARCHAR;"))
                 except Exception as enum_e1:
                     print(f"job_applications status convert warning: {enum_e1}")
-                
+
                 try:
                     conn.execute(text("ALTER TABLE activity_logs ALTER COLUMN status TYPE VARCHAR USING status::VARCHAR;"))
                 except Exception as enum_e2:
                     print(f"activity_logs status convert warning: {enum_e2}")
-    except Exception as e:
-        print(f"Migration warning: {e}")
+        except Exception as e:
+            print(f"Migration warning: {e}")
+
 
 def get_session():
     with Session(engine) as session:
