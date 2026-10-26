@@ -1,8 +1,12 @@
 from typing import Optional, List, Union
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
 import uuid
+
+def naive_utc_now() -> datetime:
+    """Return naive UTC datetime (without tzinfo) for clean cross-database timestamp storage."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 class ApplicationStatus(str, Enum):
     TAXIING = "taxiing"
@@ -24,7 +28,7 @@ class User(UserBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=naive_utc_now)
 
 class UserCreate(UserBase):
     password: str
@@ -53,7 +57,7 @@ class ActivityLog(ActivityLogBase, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: uuid.UUID = Field(foreign_key="job_applications.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=naive_utc_now)
 
 class JobApplicationBase(SQLModel):
     company: str = Field(index=True)
@@ -71,8 +75,8 @@ class JobApplication(JobApplicationBase, table=True):
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     user_id: Optional[uuid.UUID] = Field(default=None, foreign_key="users.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=naive_utc_now)
+    updated_at: datetime = Field(default_factory=naive_utc_now)
 
 class JobApplicationCreate(JobApplicationBase):
     tags_list: Optional[List[str]] = None

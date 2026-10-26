@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-RAW_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./runway.db")
+# Default to production Supabase Pooler if DATABASE_URL is unset
+SUPABASE_DEFAULT_URL = "postgresql://postgres.jysaelbytthufdhgksuu:SWQAzlxON2STrKFU@aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres"
+RAW_DATABASE_URL = os.getenv("DATABASE_URL") or SUPABASE_DEFAULT_URL
 
 def create_safe_engine(url: str):
     if not url:
-        url = "sqlite:///./runway.db"
+        url = SUPABASE_DEFAULT_URL
     
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)

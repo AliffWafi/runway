@@ -1,6 +1,6 @@
 import uuid
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Header, Request
 from fastapi.responses import JSONResponse, Response
@@ -20,7 +20,8 @@ from app.models import (
     JobApplicationRead,
     ActivityLog,
     ActivityLogBase,
-    ApplicationStatus
+    ApplicationStatus,
+    naive_utc_now
 )
 from app.auth import get_password_hash, verify_password, create_access_token, decode_access_token
 
@@ -243,7 +244,7 @@ def update_job(
         for key, value in update_data.items():
             setattr(job, key, value)
 
-        job.updated_at = datetime.utcnow()
+        job.updated_at = naive_utc_now()
         session.add(job)
         session.commit()
         session.refresh(job)
@@ -254,7 +255,7 @@ def update_job(
                 log = ActivityLog(
                     job_id=job.id,
                     status=str(job.status),
-                    date=datetime.utcnow().strftime("%Y-%m-%d"),
+                    date=naive_utc_now().strftime("%Y-%m-%d"),
                     note=f"Status changed to {status_str}"
                 )
                 session.add(log)
